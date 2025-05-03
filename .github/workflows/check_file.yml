@@ -1,0 +1,36 @@
+name: Check and Download File
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # 每15分钟检查一次
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if file is available
+        id: check_file
+        run: |
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -I "https://www.comap-math.org/mcm/2025Certs/2528079.pdf")
+          if [ "$STATUS_CODE" -eq 200 ]; then
+            echo "FILE_AVAILABLE=true" >> $GITHUB_OUTPUT
+          else
+            echo "FILE_AVAILABLE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download file if available
+        if: steps.check_file.outputs.FILE_AVAILABLE == 'true'
+        run: |
+          curl -L -o "2528079.pdf" "https://www.comap-math.org/mcm/2025Certs/2528079.pdf"
+          echo "✅ 文件下载成功！"
+
+      - name: Upload to Artifacts
+        if: steps.check_file.outputs.FILE_AVAILABLE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcm-certificate
+          path: 2528079.pdf
+
+      - name: Notify if not available
+        if: steps.check_file.outputs.FILE_AVAILABLE == 'false'
+        run: echo "❌ 文件尚未可下载 (HTTP状态码: $(curl -s -o /dev/null -w "%{http_code}" -I 'https://www.comap-math.org/mcm/2025Certs/2528079.pdf'))"
