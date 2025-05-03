@@ -1,4 +1,5 @@
 name: Check and Download File
+
 on:
   schedule:
     - cron: '*/15 * * * *'  # 每15分钟检查一次
@@ -33,4 +34,5 @@ jobs:
 
       - name: Notify if not available
         if: steps.check_file.outputs.FILE_AVAILABLE == 'false'
-        run: echo "❌ 文件尚未可下载 (HTTP状态码: $(curl -s -o /dev/null -w "%{http_code}" -I 'https://www.comap-math.org/mcm/2025Certs/2528079.pdf'))"
+        run: |
+          echo "❌ 文件尚未可下载 (HTTP状态码: $(curl -s -o /dev/null -w "%{http_code}" -I 'https://www.comap-math.org/mcm/2025Certs/2528079.pdf'))"
